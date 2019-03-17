@@ -14,13 +14,16 @@ The variables uses in this role are
 | Variable Name | Required | Description | 
 |----|----|----|
 | `region`| **Yes** | The region that you will deploy into |
-| `vpc_id` | **Yes** | The Id of the VPC | 
-| `subnet_cidr_block` | **Yes** | The CIDR block of the Subnet  | 
-| `subnets` | **Yes** | List of subnets for deployment
-| `vpc_name` | Optional | Used for tagging purposes |
-| `wait_timeout` | Optional | Period of time to wait for timeout <br> - Default `300` |
-| `wait` | Optional | Wait for subnet to become available <br> - Default `yes` |
+| `public_subnet_ids` | **Yes** | List of Public subnets for Nat Gateways <br> - This can either be explicitly declared or passed down from a previous playbook/role |
+| `vpc_id` | Optional | The ID of the VPC | 
+| `vpc_name` | Optional | Used for Rollback purposes |
+| `natgw_wait_timeout` | Optional | Period of time to wait for timeout <br> - Default `300` |
+| `natgw_wait` | Optional | Wait for subnet to become available <br> - Default `yes` |
 | `map_public` | Optional | Assign public IP addresses by default to instances <br> - Default `no` |
+| `if_exist_do_not_create` | Optional | Do not create a NAT gateway if one already exists in that subnet <br> - Default `true` |
+| `eip_address` | Optional | Elastic IP to attach to the NAT Gateway <br> - Default `empty` - a new Elastic IP will be created |
+| `release_eip` | Optional | Relase Elastic IP after NAT Gateway Removal <br> - Default `yes` |
+
 
 ## Dependencies
 
@@ -48,21 +51,9 @@ And `vars/vars.yml` contains
 vpc_name: maish_test
 region: us-east-2
 vpc_id: vpc-077c143fcf318b68c
-subnets:
-  - subnet_name: "{{ vpc_name | default (omit) }}-Public-{{ region }}a"
-    subnet_cidr: 192.168.100.0/26
-    subnet_az: "{{ region }}a"
-    subnet_map_public: yes
-  - subnet_name: "{{ vpc_name | default (omit) }}-Public-{{ region }}b"
-    subnet_cidr: 192.168.100.64/26
-    subnet_az: "{{ region }}b"
-    subnet_map_public: yes
-  - subnet_name: "{{ vpc_name | default (omit) }}-Private-{{ region }}a"
-    subnet_cidr: 192.168.100.128/26
-    subnet_az: "{{ region }}a"
-  - subnet_name: "{{ vpc_name | default (omit) }}-Private-{{ region }}b"
-    subnet_cidr: 192.168.100.192/26
-    subnet_az: "{{ region }}b"
+public_subnet_ids:
+  - subnet-083752f6318c348e0
+  - subnet-0ad42b093bd8c9390
 ```
 
 ## Running the playbook
