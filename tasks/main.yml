@@ -12,6 +12,15 @@
   register: natgw_output
   when: create is defined
 
+- name: Tag the NAT Gateway(s)
+  ec2_tag:
+    region:  "{{ region }}"
+    resource: "{{ item.nat_gateway_id }}"
+    tags:
+      Name: "ngw_{{ vpc_name }}_{{ item.subnet_id[7:] }}"
+  with_items: "{{ natgw_output.results }}"
+  when: create is defined
+
 ## Rollback sequence
 - name: Gather facts about VPC before deletion
   ec2_vpc_net_facts:
