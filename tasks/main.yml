@@ -1,59 +1,7 @@
 ---
-- name: Create new NAT gateway, generating an EIP address and wait for available status.
-  ec2_vpc_nat_gateway:
-    state: present
-    region: "{{ region }}"
-    subnet_id: "{{ item }}"
-    eip_address: "{{ eip | default (omit) }}"
-    if_exist_do_not_create: true
-    wait: "{{ natgw_wait | default ('no')}} "
-    wait_timeout: "{{ natgw_wait_timeout | default (omit) }}"
-  with_items: "{{ public_subnet_ids }}"
-  register: natgw_output
-  when: create is defined
-
-- name: Tag the NAT Gateway(s)
-  ec2_tag:
-    region:  "{{ region }}"
-    resource: "{{ item.nat_gateway_id }}"
-    tags:
-      Name: "ngw_{{ vpc_name }}_{{ item.subnet_id[7:] }}"
-  with_items: "{{ natgw_output.results }}"
-  when: create is defined
-
-## Rollback sequence
-- name: Gather facts about VPC before deletion
-  ec2_vpc_net_facts:
-    region: "{{ region }}"
-    filters:
-      "tag:Name": "{{ vpc_name }}"
-  register: vpc_facts
-  when: rollback is defined
-
-- name: Set VPC ID fact
-  set_fact:
-    vpc_id: "{{ vpc_facts.vpcs[0].id }}"
-  when: rollback is defined
-
-- name: Get all NAT Gateways from VPC
-  ec2_vpc_nat_gateway_facts:
-    region: "{{ region }}"
-    filters:
-      vpc-id: "{{ vpc_id }}"
-  register: natgw_to_remove
-  when: rollback is defined
-
-- name: Remove NAT gateways
-  ec2_vpc_nat_gateway:
-    region: "{{ region }}"
-    state: absent
-    nat_gateway_id: "{{ item.nat_gateway_id }}"
-    release_eip: yes
-    wait: "{{ natgw_wait | default ('no') }}"
-    wait_timeout: "{{ natgw_wait_timeout | default (omit) }}"
-  with_items: "{{ natgw_to_remove.result }}"
-  when: rollback is defined
-
-# - name: Display all variables/facts
-#   debug:
-#     var: hostvars[inventory_hostname]
+- include: create.yml
+  when:
+    - create is defined
+- include: rollback.yml
+  when:
+    - rollback is defined
