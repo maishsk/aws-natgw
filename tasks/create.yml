@@ -1,0 +1,42 @@
+---
+- name: Gather facts about VPC 
+  ec2_vpc_net_facts:
+    region: "{{ region }}"
+    filters:
+      "tag:Name": "{{ vpc_name }}"
+  register: vpc_facts
+
+- name: Set VPC ID fact
+  set_fact:
+    vpc_id: "{{ vpc_facts.vpcs[0].id }}"
+
+- name: Gather info about public Subnets
+  ec2_vpc_subnet_facts:
+    filters:
+      vpc-id: "{{ vpc_id }}"
+      "tag:Name": "*Public*"
+  register: public_subnets
+
+- name: Store public subnet ID's
+  set_fact:
+    public_subnet_ids: "{{ public_subnets | json_query ('subnets[*].subnet_id') }}"
+
+- name: Create new NAT gateway, generating an EIP address and wait for available status.
+  ec2_vpc_nat_gateway:
+    state: present
+    region: "{{ region }}"
+    subnet_id: "{{ item }}"
+    eip_address: "{{ eip | default (omit) }}"
+    if_exist_do_not_create: true
+    wait: "{{ natgw_wait | default ('no')}} "
+    wait_timeout: "{{ natgw_wait_timeout | default (omit) }}"
+  with_items: "{{ public_subnet_ids }}"
+  register: natgw_output
+
+- name: Tag the NAT Gateway(s)
+  ec2_tag:
+    region:  "{{ region }}"
+    resource: "{{ item.nat_gateway_id }}"
+    tags:
+      Name: "ngw_{{ vpc_name }}_{{ item.subnet_id[7:] }}"
+  with_items: "{{ natgw_output.results }}"

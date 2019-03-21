@@ -4,8 +4,10 @@ Will create a NAT gateway(s) in an existing VPC
 
 ## Requirements
 
-An existing VPC.
-Existing public Subnet(s)
+- AWS credentials and the correct permissions to create the resources
+- An existing VPC with a tagged Name
+- Existing public subnets that are Tagged with the word `Public` in their name
+- Existing private subnets that are Tagged with the word `Private` in their name
 
 ## Role Variables
 
@@ -14,9 +16,7 @@ The variables uses in this role are
 | Variable Name | Required | Description | 
 |----|----|----|
 | `region`| **Yes** | The region that you will deploy into |
-| `public_subnet_ids` | **Yes** | List of Public subnets for Nat Gateways <br> - This can either be explicitly declared or passed down from a previous playbook/role |
-| `vpc_id` | Optional | The ID of the VPC | 
-| `vpc_name` | Optional | Used for Rollback purposes |
+| `vpc_name` | **Yes** | Used for Rollback purposes |
 | `natgw_wait_timeout` | Optional | Period of time to wait for timeout <br> - Default `300` |
 | `natgw_wait` | Optional | Wait for subnet to become available <br> - Default `yes` |
 | `map_public` | Optional | Assign public IP addresses by default to instances <br> - Default `no` |
@@ -31,8 +31,25 @@ None
 
 ## Example Playbook
 
-Including an example of how to use your role (for instance, with variables passed in as parameters) is always nice for users too:
+### Download dependencies
 
+#### Create requirements file
+
+Create a `requirements.yml` file with the following contents
+
+```
+- src: https://github.com/maishsk/aws-natgw
+  version: master
+```
+
+#### Download dependencies
+Run the following command:
+```
+ansible-galaxy install -r requirements.yml --force -p .
+```
+
+### Create playbook
+Create a `main.yaml` file with the following contents:
 ```
 ---
 - name: Create NAT Gateway
@@ -45,15 +62,10 @@ Including an example of how to use your role (for instance, with variables passe
     - aws-natgw
 ```
 
-And `vars/vars.yml` contains
-
+Create a `vars/vars.yml` with the content similar to:
 ```
 vpc_name: maish_test
 region: us-east-2
-vpc_id: vpc-077c143fcf318b68c
-public_subnet_ids:
-  - subnet-083752f6318c348e0
-  - subnet-0ad42b093bd8c9390
 ```
 
 ## Running the playbook

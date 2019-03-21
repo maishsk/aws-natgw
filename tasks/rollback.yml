@@ -1,0 +1,32 @@
+---
+- name: Gather facts about VPC before deletion
+  ec2_vpc_net_facts:
+    region: "{{ region }}"
+    filters:
+      "tag:Name": "{{ vpc_name }}"
+  register: vpc_facts
+
+- name: Set VPC ID fact
+  set_fact:
+    vpc_id: "{{ vpc_facts.vpcs[0].id }}"
+
+- name: Get all NAT Gateways from VPC
+  ec2_vpc_nat_gateway_facts:
+    region: "{{ region }}"
+    filters:
+      vpc-id: "{{ vpc_id }}"
+  register: natgw_to_remove
+
+- name: Remove NAT gateways
+  ec2_vpc_nat_gateway:
+    region: "{{ region }}"
+    state: absent
+    nat_gateway_id: "{{ item.nat_gateway_id }}"
+    release_eip: yes
+    wait: "{{ natgw_wait | default ('no') }}"
+    wait_timeout: "{{ natgw_wait_timeout | default (omit) }}"
+  with_items: "{{ natgw_to_remove.result }}"
+
+# - name: Display all variables/facts
+#   debug:
+#     var: hostvars[inventory_hostname]
