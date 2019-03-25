@@ -52,14 +52,27 @@ ansible-galaxy install -r requirements.yml --force -p .
 Create a `main.yaml` file with the following contents:
 ```
 ---
-- name: Create NAT Gateway
+- name: NAT Gateway Provisioning
   hosts: localhost
   connection: local
   gather_facts: false
   vars_files:
-    - vars/vars.yml
-  roles:
-    - aws-natgw
+    - vars.yml
+
+  tasks:
+  - name: Create Process
+    include_role:
+      name: "{{ item }}"
+    with_items:
+      - aws-natgw
+    tags: [ 'never', 'create' ]
+
+  - name: Rollback Process
+    include_role:
+      name: "{{ item }}"
+    with_items:
+      - aws-natgw
+    tags: [ 'never', 'rollback' ]
 ```
 
 Create a `vars/vars.yml` with the content similar to:
@@ -70,13 +83,13 @@ region: us-east-2
 
 ## Running the playbook
 
-To create the VPC
+To create the NAT Gateways
 
-`ansible-playbook main.yml -e "create=true"`
+`ansible-playbook main.yml --tags create`
 
-To remove the VPC
+To remove the NAT Gateways
 
-`ansible-playbook main.yml -e "rollback=true"`
+`ansible-playbook main.yml --tags rollback`
 
 ## License
 
