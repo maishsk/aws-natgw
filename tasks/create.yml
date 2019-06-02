@@ -28,7 +28,7 @@
     subnet_id: "{{ item }}"
     eip_address: "{{ eip | default (omit) }}"
     if_exist_do_not_create: true
-    wait: "{{ natgw_wait | default ('no')}} "
+    wait: "{{ natgw_wait | default ('no') }} "
     wait_timeout: "{{ natgw_wait_timeout | default (omit) }}"
   with_items: "{{ public_subnet_ids }}"
   register: natgw_output
