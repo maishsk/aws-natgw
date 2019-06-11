@@ -1,4 +1,4 @@
-# aws-subnatgwnet
+# aws-natgw
 
 Will create a NAT gateway(s) in an existing VPC 
 
